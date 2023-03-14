@@ -1,0 +1,13 @@
+#Folders to exclude
+
+build/
+Debug/
+tests/config/
+
+# Code to exclude
+
+main.cpp
+*.osm
+
+#Code to include
+!tests/config/CMakeLists.txt

@@ -1,6 +1,9 @@
 #include <iostream>
 #include <vector>
+#include <unistd.h>
 #include <Eigen/Dense>
+#include "./rapidxml/rapidxml.hpp"
+#include "./rapidxml/rapidxml_utils.hpp"
 
 namespace static_data_representation {
 

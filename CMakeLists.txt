@@ -15,6 +15,7 @@ message(STATUS "Configured to compile in ${CMAKE_BUILD_TYPE} mode.")
 
 add_library(localization SHARED
     src/interface_ap.cpp
+    src/latlong_utm.cpp
 )
 
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${EIGEN_LIBRARIES})
