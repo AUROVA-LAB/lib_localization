@@ -2,6 +2,7 @@
 #include <vector>
 #include <unistd.h>
 #include <Eigen/Dense>
+#include "latlong_utm.h"
 #include "./rapidxml/rapidxml.hpp"
 #include "./rapidxml/rapidxml_utils.hpp"
 
@@ -20,12 +21,19 @@ struct Pose2D {
 	double w;
 };
 
+struct UtmToMapTrans {
+	double x;
+	double y;
+};
+
 struct ConfigParams {
 
 	std::string url_to_map;
 	std::string url_out_csv;
 
 	int representation_type;
+
+	UtmToMapTrans utm2map_tr;
 
 	float sample_distance;
 	float z_weight;
