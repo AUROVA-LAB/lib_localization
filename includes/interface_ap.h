@@ -1,4 +1,4 @@
-#include "common_types.h"
+#include "types_int.h"
 
 namespace static_data_representation {
 

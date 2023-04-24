@@ -51,4 +51,4 @@ using PolylineMap = std::vector<Polyline>;
 using Trajectory = std::vector<Pose2D>;
 using Segment = std::pair<Eigen::Vector2d, Eigen::Vector2d>;
 
-}
+} // namespace static_data_representation
