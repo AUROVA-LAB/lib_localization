@@ -13,7 +13,42 @@ void OptimizationProcess::generateOdomResiduals(ceres::LossFunction* loss_functi
 		                                        ceres::LocalParameterization* quaternion_local_parameterization,
 												ceres::Problem* problem)
 {
-    return;
+	//// Generate residuals
+	for (int j = 1; j < trajectory_estimated_.size(); j++){
+
+		size_t index = j;
+
+		ceres::CostFunction* cost_function_odom = OdometryErrorTerm::Create(constraints_odom_.at(index).tf_p,
+																			constraints_odom_.at(index).tf_q,
+																			constraints_odom_.at(index).information);
+		problem->AddResidualBlock(cost_function_odom,
+								  loss_function,
+								  trajectory_estimated_.at(index-1).p.data(),
+								  trajectory_estimated_.at(index-1).q.coeffs().data(),
+								  trajectory_estimated_.at(index).p.data(),
+								  trajectory_estimated_.at(index).q.coeffs().data());
+
+        //std::cout << "A: " << trajectory_estimated_.at(index-1).id << " == " << constraints_odom_.at(index).id_begin << std::endl;
+        //std::cout << "B: " << trajectory_estimated_.at(index).id << " == " << constraints_odom_.at(index).id_end << std::endl;
+
+		problem->SetParameterization(trajectory_estimated_.at(index-1).q.coeffs().data(), quaternion_local_parameterization);
+		problem->SetParameterization(trajectory_estimated_.at(index).q.coeffs().data(), quaternion_local_parameterization);
+	}
+	return;
+}
+
+void OptimizationProcess::solveOptimizationProblem(ceres::Problem* problem)
+{
+    //CHECK(problem != NULL);
+    ceres::Solver::Options options;
+    options.max_num_iterations = 100;
+    options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
+    ceres::Solver::Summary summary;
+    std::cout << "Pre-solve" << std::endl;
+    ceres::Solve(options, problem, &summary);
+    std::cout << "Post-solve" << std::endl;
+    //std::cout << summary.FullReport() << '\n';
+	return;
 }
 
 void OptimizationProcess::initializeState(void)
@@ -25,23 +60,25 @@ void OptimizationProcess::initializeState(void)
 
     ////Propagate pose
     Pose3dWithCovariance propagated_pose;
-    propagated_pose.id = 0;
+    propagated_pose.id = -1;
     propagated_pose.p = p_ab_estimated;
     propagated_pose.q = q_ab_estimated;
 
     // Configure initial covariance
-    Eigen::Matrix<double, 6, 6> covariance = Eigen::Matrix<double, 6, 6>::Zero();
-    covariance(0, 0) = 0.1;
-    covariance(1, 1) = 0.1;
-    covariance(5, 5) = 0.05;
-
-    //// Rotate initial covariance
-    //Eigen::Matrix<double, 3, 3> r = trajectory_estimated_.at(index).q.toRotationMatrix();
-    //Eigen::Matrix<double, 3, 3> b = covariance.block<3, 3>(0, 0);
-    //covariance.block<3, 3>(0, 0) = r * b * r.transpose();
+    Eigen::Matrix<double, 6, 6> covariance = Eigen::Matrix<double, 6, 6>::Identity();
     propagated_pose.covariance = covariance;
 
     this->addPose3dToTrajectoryEstimated(propagated_pose);
+
+    OdometryConstraint constraint_odom;
+    constraint_odom.id_begin = -1;
+    constraint_odom.id_end = 0;
+    constraint_odom.tf_q = q_ab_estimated;
+    constraint_odom.tf_p = p_ab_estimated;
+    constraint_odom.covariance = covariance;
+    constraint_odom.information = constraint_odom.covariance.inverse();
+
+    this->addOdometryConstraint (constraint_odom);
 
     return;
 }

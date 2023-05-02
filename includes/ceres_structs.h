@@ -20,14 +20,16 @@ struct OdometryErrorTerm {
         Eigen::Map<const Eigen::Quaternion<T>> q_b(q_b_ptr);
 
         // Compute the relative transformation between the two frames.
-        Eigen::Quaternion<T> q_a_inverse = q_a.conjugate();
-        Eigen::Quaternion<T> q_ab_estimated = q_a_inverse * q_b;
+        //Eigen::Quaternion<T> q_a_inverse = q_a.conjugate();
+        Eigen::Quaternion<T> q_ab_estimated = q_b * q_a.inverse();
 
         // Represent the displacement between the two frames in the A frame.
-        Eigen::Matrix<T, 3, 1> p_ab_estimated = q_a_inverse * (p_b - p_a);
+        //Eigen::Matrix<T, 3, 1> p_ab_estimated = q_a_inverse * (p_b - p_a);
+        Eigen::Matrix<T, 3, 1> p_ab_estimated = p_b - p_a;
 
         // Compute the error between the two orientation estimates.
-        Eigen::Quaternion<T> delta_q = tf_q_.template cast<T>() * q_ab_estimated.conjugate();
+        //Eigen::Quaternion<T> delta_q = tf_q_.template cast<T>() * q_ab_estimated.conjugate();
+        Eigen::Quaternion<T> delta_q = q_ab_estimated * tf_q_.template cast<T>().inverse();
 
         // Compute the residuals.
         Eigen::Map<Eigen::Matrix<T, 6, 1>> residuals(residuals_ptr);

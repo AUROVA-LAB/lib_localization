@@ -33,6 +33,8 @@ public:
 	void initializeState (void);
 	void propagateState (Eigen::Matrix<double, 3, 1> p_a, Eigen::Quaternion<double> q_a, 
                          Eigen::Matrix<double, 3, 1> p_b, Eigen::Quaternion<double> q_b, int id);
+	void solveOptimizationProblem (ceres::Problem* problem);
+
 private:
     ConfigParams params_;
 
