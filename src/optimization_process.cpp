@@ -37,6 +37,25 @@ void OptimizationProcess::generateOdomResiduals(ceres::LossFunction* loss_functi
 	return;
 }
 
+void OptimizationProcess::generatePriorResiduals(ceres::LossFunction* loss_function,
+		                                         ceres::LocalParameterization* quaternion_local_parameterization,
+												 ceres::Problem* problem)
+{
+	//// Generate residuals
+    for(int i = 0; i < constraints_prior_.size(); i++){
+        for (int j = 0; j < trajectory_estimated_.size(); j++){
+            if (constraints_prior_.at(i).id == trajectory_estimated_.at(j).id){
+                ceres::CostFunction* cost_function_prior = PriorErrorTerm::Create(constraints_prior_.at(i).p,
+                                                                                  constraints_prior_.at(i).information.block<3, 3>(0, 0));
+                problem->AddResidualBlock(cost_function_prior,
+                                          loss_function,
+                                          trajectory_estimated_.at(j).p.data());
+            }
+        }
+    }
+	return;
+}
+
 void OptimizationProcess::solveOptimizationProblem(ceres::Problem* problem)
 {
     //CHECK(problem != NULL);
@@ -88,10 +107,11 @@ void OptimizationProcess::propagateState (Eigen::Matrix<double, 3, 1> p_a, Eigen
 {
     // Compute the relative transformation between the two frames.
     //Eigen::Quaternion<double> q_a_inverse = q_a.conjugate();
-    Eigen::Quaternion<double> q_ab_estimated = q_b.inverse() * q_a;
+    Eigen::Quaternion<double> q_ab_estimated = q_a.conjugate() * q_b;
 
     // Represent the displacement between the two frames in the A frame.
-    Eigen::Matrix<double, 3, 1> p_ab_estimated = p_b - p_a;
+    Eigen::Quaternion<double> a_frames_diff = q_a * trajectory_estimated_.at(trajectory_estimated_.size()-1).q.conjugate();
+    Eigen::Matrix<double, 3, 1> p_ab_estimated = a_frames_diff.conjugate() * (p_b - p_a);
     ////
     
     ////Propagate pose

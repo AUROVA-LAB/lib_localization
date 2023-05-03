@@ -30,6 +30,8 @@ struct Pose3dWithCovariance {
     Eigen::Matrix<double, 6, 6> information;
 };
 
+using PriorConstraint = Pose3dWithCovariance;
+using PriorConstraintVector = std::vector<PriorConstraint>;
 using OdometryConstraintsVector = std::vector<OdometryConstraint>;
 using Trajectory = std::vector<Pose3dWithCovariance>;
 

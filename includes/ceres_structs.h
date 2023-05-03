@@ -21,15 +21,14 @@ struct OdometryErrorTerm {
 
         // Compute the relative transformation between the two frames.
         //Eigen::Quaternion<T> q_a_inverse = q_a.conjugate();
-        Eigen::Quaternion<T> q_ab_estimated = q_b * q_a.inverse();
+        Eigen::Quaternion<T> q_ab_estimated = q_a.conjugate() * q_b;
 
         // Represent the displacement between the two frames in the A frame.
         //Eigen::Matrix<T, 3, 1> p_ab_estimated = q_a_inverse * (p_b - p_a);
-        Eigen::Matrix<T, 3, 1> p_ab_estimated = p_b - p_a;
+        Eigen::Matrix<T, 3, 1> p_ab_estimated = q_a.conjugate() * (p_b - p_a);
 
         // Compute the error between the two orientation estimates.
-        //Eigen::Quaternion<T> delta_q = tf_q_.template cast<T>() * q_ab_estimated.conjugate();
-        Eigen::Quaternion<T> delta_q = q_ab_estimated * tf_q_.template cast<T>().inverse();
+        Eigen::Quaternion<T> delta_q = tf_q_.template cast<T>() * q_ab_estimated.conjugate();
 
         // Compute the residuals.
         Eigen::Map<Eigen::Matrix<T, 6, 1>> residuals(residuals_ptr);
@@ -54,6 +53,42 @@ struct OdometryErrorTerm {
     const Eigen::Quaterniond tf_q_;
     // The square root of the measurement information matrix.
     const Eigen::Matrix<double, 6, 6> information_;
+};
+
+/**
+ * @brief: prior (gnss) cost function
+ */
+struct PriorErrorTerm {
+	PriorErrorTerm(const Eigen::Vector3d& p_prior, const Eigen::Matrix<double, 3, 3>& information)
+            : p_prior_(p_prior), information_(information) {
+    }
+
+    template <typename T>
+    bool operator()(const T* p_ptr, T* residuals_ptr) const {
+        Eigen::Matrix<T, 3, 1> p(p_ptr);
+
+        // compute the residual
+        Eigen::Map<Eigen::Matrix<T, 3, 1>> residuals(residuals_ptr);
+        Eigen::Matrix<T, 3, 1> delta = p - p_prior_.template cast<T>();
+        residuals.template block<3, 1>(0, 0) = delta;
+
+        // Scale the residuals by the measurement uncertainty.
+		residuals.applyOnTheLeft(information_.template cast<T>());
+
+        return true;
+    }
+
+    static ceres::CostFunction* Create(const Eigen::Vector3d& p_prior,
+                                       const Eigen::Matrix<double, 3, 3>& information) {
+        return new ceres::AutoDiffCostFunction<PriorErrorTerm, 3, 3>(new PriorErrorTerm(p_prior, information));
+    }
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    // The prior point (gnss).
+    const Eigen::Vector3d p_prior_;
+    // The square root of the measurement information matrix.
+    const Eigen::Matrix<double, 3, 3> information_;
 };
 
 } // namespace geo_referencing
