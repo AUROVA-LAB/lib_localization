@@ -16,6 +16,7 @@ message(STATUS "Configured to compile in ${CMAKE_BUILD_TYPE} mode.")
 add_library(localization SHARED
     src/interface_ap.cpp
     src/latlong_utm.cpp
+    src/association_problem.cpp
     src/optimization_process.cpp
 )
 

@@ -104,6 +104,140 @@ void InterfaceAP::readMapFromFile (void)
     }
     theFile.close();
   }
+  return;
+}
+
+
+float InterfaceAP::absdeltaAngleFromSegments (Segment segment_s1, Segment segment_s2)
+{
+	float delta_yaw = 0.0;
+
+	Eigen::Vector2d s1_start = segment_s1.first;
+	Eigen::Vector2d s1_end = segment_s1.second;
+	Eigen::Vector2d s2_start = segment_s2.first;
+	Eigen::Vector2d s2_end = segment_s2.second;
+
+	float u1 = s1_end.x() - s1_start.x();
+	float u2 = s1_end.y() - s1_start.y();
+
+	float v1 = s2_end.x() - s2_start.x();
+	float v2 = s2_end.y() - s2_start.y();
+
+	float scalar_dot = u1 * v1 + u2 * v2;
+	float u = sqrt(pow(u1, 2) + pow(u2, 2));
+	float v = sqrt(pow(v1, 2) + pow(v2, 2));
+
+	delta_yaw = acos(scalar_dot / (u * v));
+
+	delta_yaw = abs(delta_yaw);
+
+	return delta_yaw;
+}
+
+void InterfaceAP::sampleSegments (Segment segment, int id, float first_z, float second_z, Polyline& new_polyline)
+{
+	PolylinePoint point;
+
+	float dist_x = segment.second.x() - segment.first.x();
+	float dist_y = segment.second.y() - segment.first.y();
+	float dist_z = second_z - first_z;
+	float distance = sqrt(pow(dist_x, 2) + pow(dist_y, 2));
+
+	int sample_times = std::floor(distance / params_.sample_distance);
+
+	if (sample_times > 1){
+		float delta_x = dist_x / sample_times;
+		float delta_y = dist_y / sample_times;
+		float delta_z = dist_z / sample_times;
+
+		for (int i = 0; i < sample_times; i++){
+			point.x = segment.first.x() + delta_x * i;
+			point.y = segment.first.y() + delta_y * i;
+			//point.z = first_z + delta_z * i;
+			if (i == 0) point.z = first_z;
+			else if (i == sample_times-1) point.z = second_z;
+			else point.z = 0.0;
+			point.id = id;
+
+			new_polyline.push_back(point);
+		}
+	}else{
+		point.x = segment.first.x();
+		point.y = segment.first.y();
+		point.z = first_z;
+		point.id = id;
+
+		new_polyline.push_back(point);
+	}
+
+	return;
+}
+
+void InterfaceAP::samplePolylineMap (void)
+{
+	PolylineMap map;
+	map = map_;
+
+	PolylineMap new_map;
+
+	for(int i = 0; i < map.size(); i++){
+		Polyline new_polyline;
+		for(int j = 0; j < map.at(i).size() - 2; j++){
+
+			Segment segment_s1, segment_s2;
+			segment_s1.first = Eigen::Vector2d(map.at(i).at(j).x, map.at(i).at(j).y);
+			segment_s1.second = Eigen::Vector2d(map.at(i).at(j+1).x, map.at(i).at(j+1).y);
+			segment_s2.first = Eigen::Vector2d(map.at(i).at(j+1).x, map.at(i).at(j+1).y);
+			segment_s2.second = Eigen::Vector2d(map.at(i).at(j+2).x, map.at(i).at(j+2).y);
+
+			float delta_yaw = absdeltaAngleFromSegments (segment_s1, segment_s2);
+
+			map.at(i).at(j+1).z = delta_yaw * params_.z_weight;
+
+			sampleSegments (segment_s1, map.at(i).at(j+1).id, map.at(i).at(j).z, map.at(i).at(j+1).z, new_polyline);
+
+			if (j == map.at(i).size() - 3){ // last iteration, to include last point
+				segment_s1.first = Eigen::Vector2d(map.at(i).at(j+1).x, map.at(i).at(j+1).y);
+				segment_s1.second = Eigen::Vector2d(map.at(i).at(j+2).x, map.at(i).at(j+2).y);
+				segment_s2.first = Eigen::Vector2d(map.at(i).at(j+2).x, map.at(i).at(j+2).y);
+				segment_s2.second = Eigen::Vector2d(map.at(i).at(j+2).x, map.at(i).at(j+2).y);
+
+				sampleSegments (segment_s1, map.at(i).at(j+2).id, map.at(i).at(j+1).z, map.at(i).at(j+2).z, new_polyline);
+				sampleSegments (segment_s2, map.at(i).at(j+2).id, map.at(i).at(j+2).z, map.at(i).at(j+2).z, new_polyline);
+			}
+		}
+		/*for (int k = 2; k < new_polyline.size(); k++){ // filter
+			float new_z = (new_polyline.at(k-2).z + new_polyline.at(k-1).z + new_polyline.at(k).z) / 3;
+			new_polyline.at(k).z = new_z;
+		}*/
+		if (new_polyline.size() > 1) new_map.push_back(new_polyline);
+	}
+
+	for (int i = 0; i < map_.size(); i++) map_.at(i).clear();
+	map_.clear();
+	map_ = new_map;
+
+	return;
+}
+
+void InterfaceAP::createLandmarksFromMap (Pose2D position, float radious)
+{
+	landmarks_.clear();
+	Polyline positions_way;
+
+	for(int i = 0; i < map_.size(); i++){
+		for(int j = 0; j < map_.at(i).size(); j++){
+			float point_sf_x = map_.at(i).at(j).x - position.x;
+			float point_sf_y = map_.at(i).at(j).y - position.y;
+			float distance = sqrt(pow(point_sf_x, 2) + pow(point_sf_y, 2));
+
+			if (distance < radious){
+				positions_way.push_back(map_.at(i).at(j));
+			}
+		}
+	}
+
+	landmarks_.push_back(positions_way);
 	return;
 }
 
