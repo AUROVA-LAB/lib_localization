@@ -1,9 +1,11 @@
-#include "../includes/association_problem.h"
+#include "../includes/sacbased_association.hpp"
 
-using namespace static_data_association;
+namespace static_data_association{
 
 template<int Dim>
 void AssociationProblem<Dim>::dcsac (void)
 {
     return;
+}
+
 }

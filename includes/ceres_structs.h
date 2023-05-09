@@ -1,3 +1,5 @@
+#pragma once
+
 #include "types_opt.h"
 #include "ceres/ceres.h"
 

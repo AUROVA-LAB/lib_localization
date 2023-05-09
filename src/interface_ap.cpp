@@ -241,4 +241,22 @@ void InterfaceAP::createLandmarksFromMap (Pose2D position, float radious)
 	return;
 }
 
+void InterfaceAP::applyTfToDetections (Eigen::Isometry3d tf)
+{
+	for(int i = 0; i < detections_.size(); i++){
+		for(int j = 0; j < detections_.at(i).size(); j++){
+			Eigen::Vector3d point;
+			point.x() = detections_.at(i).at(j).x;
+			point.y() = detections_.at(i).at(j).y;
+			point.z() = detections_.at(i).at(j).z;
+
+			point = tf * point;
+			detections_.at(i).at(j).x = point.x();
+			detections_.at(i).at(j).y = point.y();
+			detections_.at(i).at(j).z = point.z();
+		}
+	}
+	return;
+}
+
 }

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <vector>
 #include <unistd.h>
@@ -50,5 +52,6 @@ using Polyline = std::vector<PolylinePoint>;
 using PolylineMap = std::vector<Polyline>;
 using Trajectory = std::vector<Pose2D>;
 using Segment = std::pair<Eigen::Vector2d, Eigen::Vector2d>;
+using Tf = Eigen::Transform<double, 3, Eigen::Isometry, Eigen::DontAlign>;
 
 } // namespace static_data_representation

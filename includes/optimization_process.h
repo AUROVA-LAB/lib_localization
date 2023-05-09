@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ceres_structs.h"
 
 namespace geo_referencing {
@@ -7,7 +9,7 @@ public:
 	OptimizationProcess(ConfigParams params);
 	~OptimizationProcess() { }
 
-	//// SET FUNCTIONS
+	//// SET METHODS
 	void addOdometryConstraint (OdometryConstraint constraint_odom){
 		constraints_odom_.push_back(constraint_odom);
 		if (constraints_odom_.size() > params_.window_size){
@@ -27,12 +29,12 @@ public:
 		}
 	}
 
-	//// GET FUNCTIONS
+	//// GET METHODS
 	Trajectory getTrajectoryEstimated (void){
 		return trajectory_estimated_;
 	}
 
-	//// CLASS FUNCTIONS
+	//// CLASS METHODS
 	void generateOdomResiduals (ceres::LossFunction* loss_function,
 			                    ceres::LocalParameterization* quaternion_local_parameterization,
 								ceres::Problem* problem);

@@ -1,6 +1,6 @@
 #include "../includes/optimization_process.h"
 
-using namespace geo_referencing;
+namespace geo_referencing{
 
 OptimizationProcess::OptimizationProcess(ConfigParams params)
 {
@@ -124,4 +124,6 @@ void OptimizationProcess::propagateState (Eigen::Matrix<double, 3, 1> p_a, Eigen
     this->addPose3dToTrajectoryEstimated(propagated_pose);
 
     return;
+}
+
 }

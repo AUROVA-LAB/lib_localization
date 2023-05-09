@@ -1,4 +1,11 @@
+#pragma once
+
+#include "association.hpp"
 #include "detection.hpp"
+#include "forward.hpp"
+#include "hypothesis.hpp"
+
+#include "sacbased_association.hpp"
 
 namespace static_data_association {
 
@@ -11,6 +18,27 @@ public:
     }
     ~AssociationProblem() { }
 
+    //// SET METHODS
+    void addDetection(std::unique_ptr<AbstractDetection> detection) {
+        detections_.emplace_back(std::move(detection));
+        precalculated_ = false;
+    }
+    void addLandmark(std::unique_ptr<AbstractDetection> landmark) {
+        landmarks_.emplace_back(std::move(landmark));
+        precalculated_ = false;
+    }
+
+    //// GET METHODS
+    const std::vector<std::unique_ptr<AbstractDetection>>& getDetections() {
+        return detections_;
+    }
+    const std::vector<std::unique_ptr<AbstractDetection>>& getLandmarks() {
+        return landmarks_;
+    }
+
+    //// CLASS METHODS
+    void clearDetections (void) { detections_.clear(); }
+    void clearLandmarks (void) { landmarks_.clear(); }
     void dcsac (void);
 
 private:
