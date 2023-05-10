@@ -35,7 +35,7 @@ public:
 	void sampleSegments (Segment segment, int id, float first_z, float second_z, Polyline& new_polyline);
 	void samplePolylineMap (void);
 	void createLandmarksFromMap (Pose2D position, float radious);
-	void applyTfToDetections (Eigen::Isometry3d tf);
+	void applyTfFromLandmarksToBaseFrame (Eigen::Isometry3d tf);
 	
 private:
 	ConfigParams params_;

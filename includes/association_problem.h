@@ -4,6 +4,7 @@
 #include "detection.hpp"
 #include "forward.hpp"
 #include "hypothesis.hpp"
+#include "types_ap.h"
 
 #include "sacbased_association.hpp"
 
@@ -37,9 +38,16 @@ public:
     }
 
     //// CLASS METHODS
+    bool areIndividuallyCompatible(const size_t i, const size_t j) const {
+        return detections_[i]->individuallyCompatible(*(landmarks_[j])) && landmarks_[j]->individuallyCompatible(*(detections_[i]));
+    }
+    bool areDistanceCompatible(const Hypothesis<Dim>& h, const size_t i, const size_t j, const double distance) const;
+    bool areDistanceCompatible(const size_t i1, const size_t j1, const size_t i2, const size_t j2, const double distance) const;
+
     void clearDetections (void) { detections_.clear(); }
     void clearLandmarks (void) { landmarks_.clear(); }
-    void dcsac (void);
+    Hypothesis<Dim> dcsac(const SacBasedCfg sac_cfg, Eigen::Isometry3d& tf);
+    
 
 private:
     //// Caching for e.g. JCBB which queries distances many many times

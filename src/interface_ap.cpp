@@ -241,19 +241,19 @@ void InterfaceAP::createLandmarksFromMap (Pose2D position, float radious)
 	return;
 }
 
-void InterfaceAP::applyTfToDetections (Eigen::Isometry3d tf)
+void InterfaceAP::applyTfFromLandmarksToBaseFrame (Eigen::Isometry3d tf)
 {
-	for(int i = 0; i < detections_.size(); i++){
-		for(int j = 0; j < detections_.at(i).size(); j++){
+	for(int i = 0; i < landmarks_.size(); i++){
+		for(int j = 0; j < landmarks_.at(i).size(); j++){
 			Eigen::Vector3d point;
-			point.x() = detections_.at(i).at(j).x;
-			point.y() = detections_.at(i).at(j).y;
-			point.z() = detections_.at(i).at(j).z;
+			point.x() = landmarks_.at(i).at(j).x;
+			point.y() = landmarks_.at(i).at(j).y;
+			point.z() = landmarks_.at(i).at(j).z;
 
-			point = tf * point;
-			detections_.at(i).at(j).x = point.x();
-			detections_.at(i).at(j).y = point.y();
-			detections_.at(i).at(j).z = point.z();
+			point = tf.inverse() * point;
+			landmarks_.at(i).at(j).x = point.x();
+			landmarks_.at(i).at(j).y = point.y();
+			landmarks_.at(i).at(j).z = point.z();
 		}
 	}
 	return;
