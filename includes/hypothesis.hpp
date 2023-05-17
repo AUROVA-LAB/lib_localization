@@ -5,16 +5,12 @@
 
 #include <Eigen/Dense>
 
-#include "association_problem.h"
-#include "forward.hpp"
-
 namespace static_data_association {
 
-template <int Dim>
 class Hypothesis {
 public:
-    Hypothesis<Dim>(AssociationProblem<Dim>& associationProblem);
-    Hypothesis<Dim>(const Hypothesis<Dim>& hypothesisIn,
+    Hypothesis(AssociationProblem& associationProblem);
+    Hypothesis(const Hypothesis& hypothesisIn,
                const size_t detectionIdx,
                const size_t landmarkIdx);
     const Association& av() const { return association_; }
@@ -30,27 +26,19 @@ public:
     bool valid() const;
 
 private:
-    std::reference_wrapper<AssociationProblem<Dim> > associationProblem_;
+    std::reference_wrapper<AssociationProblem> associationProblem_;
     Association association_;
 };
 
-template<>
-inline bool Hypothesis<2>::valid() const {
-    return  numValidAssociations() >= 2;
-}
-
-template<>
-inline bool Hypothesis<3>::valid() const {
+inline bool Hypothesis::valid() const {
     return  numValidAssociations() >= 3;
 }
 
-
-template<int Dim>
-Hypothesis<Dim>::Hypothesis(AssociationProblem<Dim>& associationProblem) : associationProblem_{associationProblem},
+Hypothesis::Hypothesis(AssociationProblem& associationProblem) : associationProblem_{associationProblem},
     association_{} {}
 
-template<int Dim>
-Hypothesis<Dim>::Hypothesis(const Hypothesis<Dim>& hypothesisIn,
+
+Hypothesis::Hypothesis(const Hypothesis& hypothesisIn,
            const size_t detectionIdx,
            const size_t landmarkIdx) : associationProblem_{hypothesisIn.associationProblem_} {
     association_.associations_ = hypothesisIn.association_.associations_;

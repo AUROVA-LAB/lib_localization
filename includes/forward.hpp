@@ -11,8 +11,8 @@
 
 namespace static_data_association {
 
-template<int Dim> class AssociationProblem;
-template<int Dim> class Hypothesis;
+class AssociationProblem;
+class Hypothesis;
 
 
 }

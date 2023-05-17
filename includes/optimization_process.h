@@ -33,6 +33,9 @@ public:
 	Trajectory getTrajectoryEstimated (void){
 		return trajectory_estimated_;
 	}
+	PriorConstraintVector getPriorConstraints (void){
+		return constraints_prior_;
+	}
 
 	//// CLASS METHODS
 	void generateOdomResiduals (ceres::LossFunction* loss_function,
