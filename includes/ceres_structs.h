@@ -93,4 +93,48 @@ struct PriorErrorTerm {
     const Eigen::Matrix<double, 3, 3> information_;
 };
 
+/**
+ * @brief: data association tf cost function
+ */
+struct AssoErrorTerm {
+	AssoErrorTerm(const Eigen::Vector3d& p, const Eigen::Quaterniond& q, const Eigen::Matrix<double, 6, 6>& information)
+            : p_(p), q_(q), information_(information) {
+    }
+
+    template <typename T>
+    bool operator()(const T* p_ptr, const T* q_ptr, T* residuals_ptr) const {
+        Eigen::Matrix<T, 3, 1> p_est(p_ptr);
+        Eigen::Quaternion<T> q_est(q_ptr);
+
+
+        // compute the residual
+        Eigen::Map<Eigen::Matrix<T, 6, 1>> residuals(residuals_ptr);
+        Eigen::Matrix<T, 3, 1> delta_p = p_est - p_.template cast<T>();
+        Eigen::Quaternion<T> delta_q = q_.template cast<T>() * q_est.conjugate();
+        
+        residuals.template block<3, 1>(0, 0) = delta_p / 2.0;
+        residuals.template block<3, 1>(3, 0) = delta_q.vec() / 2.0;
+
+        // Scale the residuals by the measurement uncertainty.
+		residuals.applyOnTheLeft(information_.template cast<T>());
+
+        return true;
+    }
+
+    static ceres::CostFunction* Create(const Eigen::Vector3d& p,
+                                       const Eigen::Quaterniond& q,
+                                       const Eigen::Matrix<double, 6, 6>& information) {
+        return new ceres::AutoDiffCostFunction<AssoErrorTerm, 6, 3, 4>(new AssoErrorTerm(p, q, information));
+    }
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    // The prior point (gnss).
+    const Eigen::Vector3d p_;
+    const Eigen::Quaterniond q_;
+
+    // The square root of the measurement information matrix.
+    const Eigen::Matrix<double, 6, 6> information_;
+};
+
 } // namespace geo_referencing

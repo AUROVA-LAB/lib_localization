@@ -22,6 +22,12 @@ public:
 			constraints_prior_.erase(constraints_prior_.begin());
 		}
 	}
+	void addAssoConstraint (AssoConstraint constraints_asso){
+		constraints_asso_.push_back(constraints_asso);
+		if (constraints_asso_.size() > params_.window_size){
+			constraints_asso_.erase(constraints_asso_.begin());
+		}
+	}
 	void addPose3dToTrajectoryEstimated (Pose3dWithCovariance pose3d_estimated){
 		trajectory_estimated_.push_back(pose3d_estimated);
 		if (trajectory_estimated_.size() > params_.window_size){
@@ -44,6 +50,9 @@ public:
 	void generatePriorResiduals (ceres::LossFunction* loss_function,
 			                     ceres::LocalParameterization* quaternion_local_parameterization,
 								 ceres::Problem* problem);
+	void generateAssoResiduals (ceres::LossFunction* loss_function,
+			                    ceres::LocalParameterization* quaternion_local_parameterization,
+								ceres::Problem* problem);
 	void initializeState (void);
 	void propagateState (Eigen::Matrix<double, 3, 1> p_a, Eigen::Quaternion<double> q_a, 
                          Eigen::Matrix<double, 3, 1> p_b, Eigen::Quaternion<double> q_b, int id);
@@ -54,6 +63,8 @@ private:
 
 	OdometryConstraintsVector constraints_odom_;
 	PriorConstraintVector constraints_prior_;
+	AssoConstraintVector constraints_asso_;
+
     Trajectory trajectory_estimated_;
 };
 

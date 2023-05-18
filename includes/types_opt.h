@@ -34,6 +34,8 @@ struct Pose3dWithCovariance {
 
 using PriorConstraint = Pose3dWithCovariance;
 using PriorConstraintVector = std::vector<PriorConstraint>;
+using AssoConstraint = Pose3dWithCovariance;
+using AssoConstraintVector = std::vector<AssoConstraint>;
 using OdometryConstraintsVector = std::vector<OdometryConstraint>;
 using Trajectory = std::vector<Pose3dWithCovariance>;
 

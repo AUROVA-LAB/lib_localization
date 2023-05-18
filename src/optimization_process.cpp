@@ -37,6 +37,32 @@ void OptimizationProcess::generateOdomResiduals(ceres::LossFunction* loss_functi
 	return;
 }
 
+void OptimizationProcess::generateAssoResiduals(ceres::LossFunction* loss_function,
+		                                        ceres::LocalParameterization* quaternion_local_parameterization,
+												ceres::Problem* problem)
+{
+	//// Generate residuals
+    for(int i = 0; i < constraints_asso_.size(); i++){
+        for (int j = 0; j < trajectory_estimated_.size(); j++){
+            if (constraints_asso_.at(i).id == trajectory_estimated_.at(j).id){
+
+                ceres::CostFunction* cost_function_asso = AssoErrorTerm::Create(constraints_asso_.at(i).p,
+                                                                                constraints_asso_.at(i).q,
+                                                                                constraints_asso_.at(i).information);
+                problem->AddResidualBlock(cost_function_asso,
+                                          loss_function,
+                                          trajectory_estimated_.at(j).p.data(),
+                                          trajectory_estimated_.at(j).q.coeffs().data());
+
+                problem->SetParameterization(trajectory_estimated_.at(j).q.coeffs().data(), quaternion_local_parameterization);
+
+                break;
+            }
+        }
+    }
+	return;
+}
+
 void OptimizationProcess::generatePriorResiduals(ceres::LossFunction* loss_function,
 		                                         ceres::LocalParameterization* quaternion_local_parameterization,
 												 ceres::Problem* problem)
@@ -50,6 +76,7 @@ void OptimizationProcess::generatePriorResiduals(ceres::LossFunction* loss_funct
                 problem->AddResidualBlock(cost_function_prior,
                                           loss_function,
                                           trajectory_estimated_.at(j).p.data());
+                break;
             }
         }
     }
