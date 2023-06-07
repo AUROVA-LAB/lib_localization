@@ -21,6 +21,22 @@ struct OdometryConstraint {
     Eigen::Matrix<double, 6, 6> information;
 };
 
+/**
+ * @brief AssoPointsConstraint: The Constraint for points associations in the pose graph
+ */
+struct AssoPointsConstraint {
+    size_t id;
+
+    // Associate data
+    Eigen::Vector3d detection;
+    Eigen::Vector3d landmark;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    // Covariance and information matrix (inverse of covariance)
+    Eigen::Matrix<double, 3, 3> covariance;
+    Eigen::Matrix<double, 3, 3> information;
+};
+
 struct Pose3dWithCovariance {
 	size_t id;
 
@@ -34,8 +50,13 @@ struct Pose3dWithCovariance {
 
 using PriorConstraint = Pose3dWithCovariance;
 using PriorConstraintVector = std::vector<PriorConstraint>;
+
 using AssoConstraint = Pose3dWithCovariance;
 using AssoConstraintVector = std::vector<AssoConstraint>;
+
+using AssoPointsConstraintsSingleShot = std::vector<AssoPointsConstraint>;
+using AssoPointsConstraintsVector = std::vector<AssoPointsConstraintsSingleShot>;
+
 using OdometryConstraintsVector = std::vector<OdometryConstraint>;
 using Trajectory = std::vector<Pose3dWithCovariance>;
 

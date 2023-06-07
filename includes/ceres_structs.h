@@ -94,6 +94,53 @@ struct PriorErrorTerm {
 };
 
 /**
+ * @brief: data association points cost function
+ */
+struct AssoPointsErrorTerm {
+	AssoPointsErrorTerm(const Eigen::Vector3d& det, const Eigen::Vector3d& lm, const Eigen::Matrix<double, 3, 3>& information)
+            : det_(det), lm_(lm), information_(information) {
+    }
+
+    template <typename T>
+    bool operator()(const T* p_ptr, const T* q_ptr, T* residuals_ptr) const {
+        Eigen::Matrix<T, 3, 1> p(p_ptr);
+        Eigen::Quaternion<T> q(q_ptr);
+
+        // transform pq to tf matrix
+        Eigen::Transform<T, 3, Eigen::Isometry, Eigen::DontAlign> tf;
+        Eigen::Matrix<T, 3, 3> r = q.toRotationMatrix();
+        Eigen::Matrix<T, 3, 1> t = p;
+        tf.linear() = r;
+        tf.translation() = t;
+
+        // compute the residual
+        Eigen::Map<Eigen::Matrix<T, 3, 1>> residuals(residuals_ptr);
+        Eigen::Matrix<T, 3, 1> det_tf = tf * det_.template cast<T>();
+        Eigen::Matrix<T, 3, 1> delta = det_tf - lm_.template cast<T>();
+        residuals.template block<3, 1>(0, 0) = delta / 1.0;
+
+        // Scale the residuals by the measurement uncertainty.
+		residuals.applyOnTheLeft(information_.template cast<T>());
+
+        return true;
+    }
+
+    static ceres::CostFunction* Create(const Eigen::Vector3d& det,
+                                       const Eigen::Vector3d& lm,
+                                       const Eigen::Matrix<double, 3, 3>& information) {
+        return new ceres::AutoDiffCostFunction<AssoPointsErrorTerm, 3, 3, 4>(new AssoPointsErrorTerm(det, lm, information));
+    }
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    // the matched landmark and detection.
+    const Eigen::Vector3d det_;
+    const Eigen::Vector3d lm_;
+    // The square root of the measurement information matrix.
+    const Eigen::Matrix<double, 3, 3> information_;
+};
+
+/**
  * @brief: data association tf cost function
  */
 struct AssoErrorTerm {

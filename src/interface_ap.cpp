@@ -232,7 +232,10 @@ void InterfaceAP::createLandmarksFromMap (Pose2D position, float radious)
 			float distance = sqrt(pow(point_sf_x, 2) + pow(point_sf_y, 2));
 
 			if (distance < radious){
-				positions_way.push_back(map_.at(i).at(j));
+				PolylinePoint point_tmp = map_.at(i).at(j);
+				point_tmp.id = i;
+				point_tmp.id_aux = j;
+				positions_way.push_back(point_tmp);
 			}
 		}
 	}

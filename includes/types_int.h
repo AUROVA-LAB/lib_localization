@@ -15,6 +15,7 @@ struct PolylinePoint {
 	double y;
 	double z;
 	int id;
+	int id_aux;
 };
 
 struct Pose2D {

@@ -37,6 +37,35 @@ void OptimizationProcess::generateOdomResiduals(ceres::LossFunction* loss_functi
 	return;
 }
 
+void OptimizationProcess::generateAssoPointResiduals(ceres::LossFunction* loss_function,
+		                                             ceres::LocalParameterization* quaternion_local_parameterization,
+												     ceres::Problem* problem)
+{
+    //// Generate residuals
+    for(int i = 0; i < constraints_asso_pt_vc_.size(); i++){
+        for (int j = 0; j < trajectory_estimated_.size(); j++){
+            if (constraints_asso_pt_vc_.at(i).at(0).id == trajectory_estimated_.at(j).id){
+
+                for (int k = 0; k < constraints_asso_pt_vc_.at(i).size(); k++){
+                    ceres::CostFunction* cost_function_pt = AssoPointsErrorTerm::Create(constraints_asso_pt_vc_.at(i).at(k).detection,
+                                                                                        constraints_asso_pt_vc_.at(i).at(k).landmark,
+                                                                                        constraints_asso_pt_vc_.at(i).at(k).information);
+
+                    problem->AddResidualBlock(cost_function_pt,
+                                              loss_function,
+                                              trajectory_estimated_.at(j).p.data(),
+                                              trajectory_estimated_.at(j).q.coeffs().data());
+                    problem->SetParameterization(trajectory_estimated_.at(j).q.coeffs().data(), quaternion_local_parameterization);
+                }
+                break;
+            }
+        }
+    }
+    //problem->AddParameterBlock(trajectory_estimated_.at(index).p.data(), 3); // for cov estimation
+	//problem->AddParameterBlock(trajectory_estimated_.at(index).q.coeffs().data(), 4);
+	return;
+}
+
 void OptimizationProcess::generateAssoResiduals(ceres::LossFunction* loss_function,
 		                                        ceres::LocalParameterization* quaternion_local_parameterization,
 												ceres::Problem* problem)
