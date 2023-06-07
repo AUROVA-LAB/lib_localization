@@ -34,6 +34,18 @@ public:
 			trajectory_estimated_.erase(trajectory_estimated_.begin());
 		}
 	}
+	void addTranslationTransform (float tf_trs){
+		var_trs_.push_back(tf_trs);
+		if (var_trs_.size() > params_.window_size / 5){
+			var_trs_.erase(var_trs_.begin());
+		}
+	}
+	void addRotationTransform (float tf_rot){
+		var_rot_.push_back(tf_rot);
+		if (var_rot_.size() > params_.window_size / 5){
+			var_rot_.erase(var_rot_.begin());
+		}
+	}
 
 	//// GET METHODS
 	Trajectory getTrajectoryEstimated (void){
@@ -41,6 +53,16 @@ public:
 	}
 	PriorConstraintVector getPriorConstraints (void){
 		return constraints_prior_;
+	}
+	float getTranslationVariance (void){
+		float acum = 0.0;
+		for (int i = 0; i < var_trs_.size(); i++) acum = acum + var_trs_.at(i);
+		return acum / var_trs_.size();
+	}
+	float getRotationVariance (void){
+		float acum = 0.0;
+		for (int i = 0; i < var_rot_.size(); i++) acum = acum + var_rot_.at(i);
+		return acum / var_rot_.size();
 	}
 
 	//// CLASS METHODS
@@ -66,6 +88,9 @@ private:
 	AssoConstraintVector constraints_asso_;
 
     Trajectory trajectory_estimated_;
+
+	std::vector<float> var_trs_;
+	std::vector<float> var_rot_;
 };
 
 }
