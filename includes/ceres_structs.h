@@ -34,8 +34,8 @@ struct OdometryErrorTerm {
 
         // Compute the residuals.
         Eigen::Map<Eigen::Matrix<T, 6, 1>> residuals(residuals_ptr);
-        residuals.template block<3, 1>(0, 0) = (p_ab_estimated - tf_p_.template cast<T>());
-        residuals.template block<3, 1>(3, 0) = delta_q.vec();
+        residuals.template block<3, 1>(0, 0) = (p_ab_estimated - tf_p_.template cast<T>()) * 100.0;
+        residuals.template block<3, 1>(3, 0) = delta_q.vec() * 100.0;
 
         // Scale the residuals by the measurement uncertainty.
 		residuals.applyOnTheLeft(information_.template cast<T>());
