@@ -4,6 +4,10 @@
 #include <vector>
 #include <unistd.h>
 #include <Eigen/Dense>
+#include <pcl/registration/icp.h>
+#include <pcl/filters/filter.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/kdtree/kdtree_flann.h>
 #include "latlong_utm.h"
 #include "./rapidxml/rapidxml.hpp"
 #include "./rapidxml/rapidxml_utils.hpp"
@@ -34,9 +38,12 @@ struct ConfigParams {
 	std::string url_to_map;
 	std::string url_out_csv;
 
-	int representation_type;
+    float radious_dt;
+	float radious_lm;
 
 	UtmToMapTrans utm2map_tr;
+
+	int representation_type;
 
 	float sample_distance;
 	float z_weight;
@@ -49,10 +56,14 @@ struct ConfigParams {
 	float threshold_asso;
 };
 
+using IndexVector = std::vector<int>;
+using PointCloudPCL = pcl::PointCloud<pcl::PointXYZ>::Ptr;
 using Polyline = std::vector<PolylinePoint>;
 using PolylineMap = std::vector<Polyline>;
 using Trajectory = std::vector<Pose2D>;
 using Segment = std::pair<Eigen::Vector2d, Eigen::Vector2d>;
 using Tf = Eigen::Transform<double, 3, Eigen::Isometry, Eigen::DontAlign>;
+using AssociationSingle = std::pair<Eigen::Vector3d, Eigen::Vector3d>;
+using AssociationsVector = std::vector<AssociationSingle>;
 
 } // namespace static_data_representation

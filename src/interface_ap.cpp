@@ -11,6 +11,10 @@ InterfaceAP::InterfaceAP(std::string config_path)
 InterfaceAP::InterfaceAP(ConfigParams params)
 {
 	this->params_ = params;
+
+	this->landmarks_pcl_ = PointCloudPCL(new pcl::PointCloud<pcl::PointXYZ>); 
+	this->detections_pcl_ = PointCloudPCL(new pcl::PointCloud<pcl::PointXYZ>); 
+	this->coregistered_pcl_ = PointCloudPCL(new pcl::PointCloud<pcl::PointXYZ>); 
 	return;
 }
 
@@ -220,7 +224,7 @@ void InterfaceAP::samplePolylineMap (void)
 	return;
 }
 
-void InterfaceAP::createLandmarksFromMap (Pose2D position, float radious)
+void InterfaceAP::createLandmarksFromMap (Pose2D position)
 {
 	landmarks_.clear();
 	Polyline positions_way;
@@ -231,7 +235,7 @@ void InterfaceAP::createLandmarksFromMap (Pose2D position, float radious)
 			float point_sf_y = map_.at(i).at(j).y - position.y;
 			float distance = sqrt(pow(point_sf_x, 2) + pow(point_sf_y, 2));
 
-			if (distance < radious){
+			if (distance < params_.radious_lm){
 				PolylinePoint point_tmp = map_.at(i).at(j);
 				point_tmp.id = i;
 				point_tmp.id_aux = j;
@@ -241,6 +245,34 @@ void InterfaceAP::createLandmarksFromMap (Pose2D position, float radious)
 	}
 
 	landmarks_.push_back(positions_way);
+	return;
+}
+
+void InterfaceAP::parseLandmarksToPcl (std::string frame)
+{
+	this->landmarks_i_.clear();
+	this->landmarks_j_.clear();
+	this->landmarks_pcl_->clear();
+	this->landmarks_pcl_->header.frame_id = frame;
+
+	for (int i = 0; i < this->landmarks_.at(0).size(); i++){
+		this->landmarks_pcl_->push_back(pcl::PointXYZ(this->landmarks_.at(0).at(i).x,
+											          this->landmarks_.at(0).at(i).y, 0.0));
+		this->landmarks_i_.push_back(this->landmarks_.at(0).at(i).id);
+		this->landmarks_j_.push_back(this->landmarks_.at(0).at(i).id_aux);
+	}
+	return;
+}
+
+void InterfaceAP::parseDetectionsToPcl (std::string frame)
+{
+	this->detections_pcl_->clear();
+	this->detections_pcl_->header.frame_id = frame;
+
+	for (int i = 0; i < this->detections_.at(0).size(); i++){
+		this->detections_pcl_->push_back(pcl::PointXYZ(this->detections_.at(0).at(i).x,
+											           this->detections_.at(0).at(i).y, 0.0));
+	}
 	return;
 }
 
@@ -259,6 +291,61 @@ void InterfaceAP::applyTfFromLandmarksToBaseFrame (Eigen::Isometry3d tf)
 			landmarks_.at(i).at(j).z = point.z();
 		}
 	}
+	return;
+}
+
+void InterfaceAP::dataAssociationIcp (std::string frame, Eigen::Matrix4d& tf, AssociationsVector& associations)
+{
+	//// DATA CO-REGISTRATION
+	pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
+	icp.setInputSource(this->detections_pcl_);
+	icp.setInputTarget(this->landmarks_pcl_);
+
+	this->coregistered_pcl_->clear();
+	this->coregistered_pcl_->header.frame_id = frame;
+
+	icp.align(*this->coregistered_pcl_);
+
+	tf = icp.getFinalTransformation().cast<double>();
+
+	// Parse to affine to manage transforms
+  	Eigen::Affine3d tf_aff(Eigen::Affine3f::Identity());
+  	tf_aff.matrix() = tf;
+
+	//std::cout << "has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore() << std::endl;
+	//std::cout << tf << std::endl;
+
+	//// DATA ASSOCIATION
+	pcl::VoxelGrid<pcl::PointXYZ> vg;
+	vg.setInputCloud(this->coregistered_pcl_);
+	vg.setLeafSize(1.5f, 1.5f, 100.0f); // TODO: Get from params
+	vg.filter(*this->coregistered_pcl_);
+
+	pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+  	kdtree.setInputCloud(this->landmarks_pcl_);
+  	int K = 10;
+	for (int i = 0; i < this->coregistered_pcl_->points.size(); i++){
+      // Nearest point "landmarks_pcl"
+      std::vector<int> pointIdxKNNSearch(K);
+      std::vector<float> pointKNNSquaredDistance(K);
+      pcl::PointXYZ search_point = this->coregistered_pcl_->points.at(i);
+      if (kdtree.nearestKSearch (search_point, K, pointIdxKNNSearch, pointKNNSquaredDistance) > 0){
+        if (sqrt(pointKNNSquaredDistance[0]) < 1.0){ // TODO: Get from param
+
+			AssociationSingle association;
+          
+			association.first = Eigen::Vector3d(map_.at(this->landmarks_i_.at(pointIdxKNNSearch[0])).at(this->landmarks_j_.at(pointIdxKNNSearch[0])).x,
+                                                map_.at(this->landmarks_i_.at(pointIdxKNNSearch[0])).at(this->landmarks_j_.at(pointIdxKNNSearch[0])).y,
+                                                0.0);
+
+            association.second = tf_aff.inverse() * Eigen::Vector3d(this->coregistered_pcl_->points.at(i).x,
+                                                                    this->coregistered_pcl_->points.at(i).y,
+                                                                    0.0);
+			associations.push_back(association);
+        }
+      }
+    }
+
 	return;
 }
 
