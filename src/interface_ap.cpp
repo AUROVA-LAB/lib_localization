@@ -157,7 +157,7 @@ void InterfaceAP::sampleSegments (Segment segment, int id, float first_z, float 
 		for (int i = 0; i < sample_times; i++){
 			point.x = segment.first.x() + delta_x * i;
 			point.y = segment.first.y() + delta_y * i;
-			//point.z = first_z + delta_z * i;
+			point.z = first_z + delta_z * i;
 			if (i == 0) point.z = first_z;
 			else if (i == sample_times-1) point.z = second_z;
 			else point.z = 0.0;
@@ -318,7 +318,7 @@ void InterfaceAP::dataAssociationIcp (std::string frame, Eigen::Matrix4d& tf, As
 	//// DATA ASSOCIATION
 	pcl::VoxelGrid<pcl::PointXYZ> vg;
 	vg.setInputCloud(this->coregistered_pcl_);
-	vg.setLeafSize(1.5f, 1.5f, 100.0f); // TODO: Get from params
+	vg.setLeafSize(params_.voxel_asso, params_.voxel_asso, 100.0f);
 	vg.filter(*this->coregistered_pcl_);
 
 	pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
@@ -330,7 +330,7 @@ void InterfaceAP::dataAssociationIcp (std::string frame, Eigen::Matrix4d& tf, As
       std::vector<float> pointKNNSquaredDistance(K);
       pcl::PointXYZ search_point = this->coregistered_pcl_->points.at(i);
       if (kdtree.nearestKSearch (search_point, K, pointIdxKNNSearch, pointKNNSquaredDistance) > 0){
-        if (sqrt(pointKNNSquaredDistance[0]) < 1.0){ // TODO: Get from param
+        if (sqrt(pointKNNSquaredDistance[0]) < params_.threshold_asso){ 
 
 			AssociationSingle association;
           

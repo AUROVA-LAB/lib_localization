@@ -116,7 +116,7 @@ void OptimizationProcess::solveOptimizationProblem(ceres::Problem* problem)
 {
     //CHECK(problem != NULL);
     ceres::Solver::Options options;
-    options.max_num_iterations = 100;
+    options.max_num_iterations = params_.max_num_iterations_op;
     options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
     ceres::Solver::Summary summary;
     std::cout << "Pre-solve" << std::endl;

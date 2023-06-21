@@ -62,6 +62,7 @@ using Trajectory = std::vector<Pose3dWithCovariance>;
 
 struct ConfigParams {
 	int window_size;
+    int max_num_iterations_op;
 };
 
 } // namespace geo_referencing

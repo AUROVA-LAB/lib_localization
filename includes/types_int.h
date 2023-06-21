@@ -54,6 +54,7 @@ struct ConfigParams {
 	float y_var;
 	float w_var;
 	float threshold_asso;
+	float voxel_asso;
 };
 
 using IndexVector = std::vector<int>;
