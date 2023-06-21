@@ -1,10 +1,10 @@
 #pragma once
 
-#include "types_opt.h"
+#include "types_optimization.h"
 #include "ceres/ceres.h"
 
 
-namespace geo_referencing {
+namespace optimization_process {
 
 /**
  * @brief: Odometry cost function
@@ -184,4 +184,4 @@ struct AssoErrorTerm {
     const Eigen::Matrix<double, 6, 6> information_;
 };
 
-} // namespace geo_referencing
+} // namespace optimization_process

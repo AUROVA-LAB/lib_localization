@@ -1,6 +1,6 @@
 #include "../includes/optimization_process.h"
 
-namespace geo_referencing{
+namespace optimization_process{
 
 OptimizationProcess::OptimizationProcess(ConfigParams params)
 {
