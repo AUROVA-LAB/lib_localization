@@ -112,6 +112,27 @@ void OptimizationProcess::generatePriorResiduals(ceres::LossFunction* loss_funct
 	return;
 }
 
+void OptimizationProcess::generatePriorErrorResiduals(ceres::LossFunction* loss_function,
+		                                              ceres::LocalParameterization* quaternion_local_parameterization,
+												      ceres::Problem* problem)
+{
+	//// Generate residuals
+    for(int i = 0; i < constraints_prior_.size(); i++){
+        for (int j = 0; j < trajectory_estimated_.size(); j++){
+            if (constraints_prior_.at(i).id == trajectory_estimated_.at(j).id){
+                ceres::CostFunction* cost_function_error = PriorMisErrorTerm::Create(constraints_prior_.at(i).p,
+                                                                                     trajectory_estimated_.at(j).p,
+                                                                                     constraints_prior_.at(i).information.block<3, 3>(0, 0));
+                problem->AddResidualBlock(cost_function_error,
+                                          loss_function,
+                                          prior_error_.data());
+                break;
+            }
+        }
+    }
+	return;
+}
+
 void OptimizationProcess::solveOptimizationProblem(ceres::Problem* problem)
 {
     //CHECK(problem != NULL);

@@ -48,6 +48,9 @@ public:
 	PriorConstraintVector getPriorConstraints (void){
 		return constraints_prior_;
 	}
+	Eigen::Vector3d getPriorError (void){
+		return prior_error_;
+	}
 
 	//// CLASS METHODS
 	void generateOdomResiduals (ceres::LossFunction* loss_function,
@@ -56,6 +59,9 @@ public:
 	void generatePriorResiduals (ceres::LossFunction* loss_function,
 			                     ceres::LocalParameterization* quaternion_local_parameterization,
 								 ceres::Problem* problem);
+	void generatePriorErrorResiduals (ceres::LossFunction* loss_function,
+			                          ceres::LocalParameterization* quaternion_local_parameterization,
+								      ceres::Problem* problem);
 	void generateAssoPointResiduals (ceres::LossFunction* loss_function,
 			                         ceres::LocalParameterization* quaternion_local_parameterization,
 								     ceres::Problem* problem);
@@ -76,6 +82,7 @@ private:
 	AssoPointsConstraintsVector constraints_asso_pt_vc_;
 
     Trajectory trajectory_estimated_;
+	Eigen::Vector3d prior_error_;
 };
 
 }

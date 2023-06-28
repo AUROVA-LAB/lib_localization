@@ -94,6 +94,45 @@ struct PriorErrorTerm {
 };
 
 /**
+ * @brief: prior (gnss) misalignment cost function
+ */
+struct PriorMisErrorTerm {
+	PriorMisErrorTerm(const Eigen::Vector3d& p_prior, const Eigen::Vector3d& p_state, const Eigen::Matrix<double, 3, 3>& information)
+            : p_prior_(p_prior), p_state_(p_state), information_(information) {
+    }
+
+    template <typename T>
+    bool operator()(const T* e_ptr, T* residuals_ptr) const {
+        Eigen::Matrix<T, 3, 1> e(e_ptr);
+
+        // compute the residual
+        Eigen::Map<Eigen::Matrix<T, 3, 1>> residuals(residuals_ptr);
+        Eigen::Matrix<T, 3, 1> delta = p_state_.template cast<T>() - (p_prior_.template cast<T>() - e);
+        residuals.template block<3, 1>(0, 0) = delta;
+
+        // Scale the residuals by the measurement uncertainty.
+		residuals.applyOnTheLeft(information_.template cast<T>());
+
+        return true;
+    }
+
+    static ceres::CostFunction* Create(const Eigen::Vector3d& p_prior,
+                                       const Eigen::Vector3d& p_state,
+                                       const Eigen::Matrix<double, 3, 3>& information) {
+        return new ceres::AutoDiffCostFunction<PriorMisErrorTerm, 3, 3>(new PriorMisErrorTerm(p_prior, p_state, information));
+    }
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    // The prior point (gnss).
+    const Eigen::Vector3d p_prior_;
+    // The state point (localization).
+    const Eigen::Vector3d p_state_;
+    // The square root of the measurement information matrix.
+    const Eigen::Matrix<double, 3, 3> information_;
+};
+
+/**
  * @brief: data association points cost function
  */
 struct AssoPointsErrorTerm {
@@ -159,8 +198,8 @@ struct AssoErrorTerm {
         Eigen::Matrix<T, 3, 1> delta_p = p_est - p_.template cast<T>();
         Eigen::Quaternion<T> delta_q = q_.template cast<T>() * q_est.conjugate();
         
-        residuals.template block<3, 1>(0, 0) = delta_p / 2.0;
-        residuals.template block<3, 1>(3, 0) = delta_q.vec() / 2.0;
+        residuals.template block<3, 1>(0, 0) = delta_p;
+        residuals.template block<3, 1>(3, 0) = delta_q.vec();
 
         // Scale the residuals by the measurement uncertainty.
 		residuals.applyOnTheLeft(information_.template cast<T>());
