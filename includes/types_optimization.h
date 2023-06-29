@@ -48,7 +48,18 @@ struct Pose3dWithCovariance {
     Eigen::Matrix<double, 6, 6> information;
 };
 
-using PriorConstraint = Pose3dWithCovariance;
+struct PriorConstraint {
+	size_t id;
+
+	Eigen::Vector3d p;
+    Eigen::Vector3d p_raw;
+    Eigen::Quaterniond q;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    Eigen::Matrix<double, 3, 3> covariance;
+    Eigen::Matrix<double, 3, 3> information;
+};
+
 using PriorConstraintVector = std::vector<PriorConstraint>;
 
 using AssoConstraint = Pose3dWithCovariance;

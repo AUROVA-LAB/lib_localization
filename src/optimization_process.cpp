@@ -100,7 +100,7 @@ void OptimizationProcess::generatePriorResiduals(ceres::LossFunction* loss_funct
     for(int i = 0; i < constraints_prior_.size(); i++){
         for (int j = 0; j < trajectory_estimated_.size(); j++){
             if (constraints_prior_.at(i).id == trajectory_estimated_.at(j).id){
-                ceres::CostFunction* cost_function_prior = PriorErrorTerm::Create(constraints_prior_.at(i).p,
+                ceres::CostFunction* cost_function_prior = PriorErrorTerm::Create(constraints_prior_.at(i).p, // Corrected observation
                                                                                   constraints_prior_.at(i).information.block<3, 3>(0, 0));
                 problem->AddResidualBlock(cost_function_prior,
                                           loss_function,
@@ -120,7 +120,7 @@ void OptimizationProcess::generatePriorErrorResiduals(ceres::LossFunction* loss_
     for(int i = 0; i < constraints_prior_.size(); i++){
         for (int j = 0; j < trajectory_estimated_.size(); j++){
             if (constraints_prior_.at(i).id == trajectory_estimated_.at(j).id){
-                ceres::CostFunction* cost_function_error = PriorMisErrorTerm::Create(constraints_prior_.at(i).p,
+                ceres::CostFunction* cost_function_error = PriorMisErrorTerm::Create(constraints_prior_.at(i).p_raw, // Original observation
                                                                                      trajectory_estimated_.at(j).p,
                                                                                      constraints_prior_.at(i).information.block<3, 3>(0, 0));
                 problem->AddResidualBlock(cost_function_error,
