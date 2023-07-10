@@ -49,6 +49,7 @@ void OptimizationProcess::generateAssoPointResiduals(ceres::LossFunction* loss_f
                 for (int k = 0; k < constraints_asso_pt_vc_.at(i).size(); k++){
                     ceres::CostFunction* cost_function_pt = AssoPointsErrorTerm::Create(constraints_asso_pt_vc_.at(i).at(k).detection,
                                                                                         constraints_asso_pt_vc_.at(i).at(k).landmark,
+                                                                                        constraints_asso_pt_vc_.at(i).at(k).asso_weight,
                                                                                         constraints_asso_pt_vc_.at(i).at(k).information);
 
                     problem->AddResidualBlock(cost_function_pt,

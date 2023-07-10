@@ -15,6 +15,7 @@ DataProcessing::DataProcessing(ConfigParams params)
 	this->landmarks_pcl_ = PointCloudPCL(new pcl::PointCloud<pcl::PointXYZ>); 
 	this->detections_pcl_ = PointCloudPCL(new pcl::PointCloud<pcl::PointXYZ>); 
 	this->coregistered_pcl_ = PointCloudPCL(new pcl::PointCloud<pcl::PointXYZ>); 
+	this->associated_pcl_ = PointCloudPCL(new pcl::PointCloud<pcl::PointXYZ>);
 	return;
 }
 
@@ -160,7 +161,7 @@ void DataProcessing::sampleSegments (Segment segment, int id, float first_z, flo
 			point.z = first_z + delta_z * i;
 			if (i == 0) point.z = first_z;
 			else if (i == sample_times-1) point.z = second_z;
-			else point.z = 0.0;
+			//else point.z = 0.0;
 			point.id = id;
 
 			new_polyline.push_back(point);
@@ -186,9 +187,21 @@ void DataProcessing::samplePolylineMap (void)
 
 	for(int i = 0; i < map.size(); i++){
 		Polyline new_polyline;
+		Segment segment_s1, segment_s2;
+		if((sqrt(pow(map.at(i).at(map.at(i).size()-1).x - map.at(i).at(0).x, 2) + // first iteration, to include z in point 0.
+		         pow(map.at(i).at(map.at(i).size()-1).y - map.at(i).at(0).y, 2)) < params_.sample_distance) && (map.at(i).size() > 2)){
+			segment_s1.first = Eigen::Vector2d(map.at(i).at(map.at(i).size()-2).x, map.at(i).at(map.at(i).size()-2).y);
+			segment_s1.second = Eigen::Vector2d(map.at(i).at(0).x, map.at(i).at(0).y);
+			segment_s2.first = Eigen::Vector2d(map.at(i).at(0).x, map.at(i).at(0).y);
+			segment_s2.second = Eigen::Vector2d(map.at(i).at(1).x, map.at(i).at(1).y);
+
+			float delta_yaw = absdeltaAngleFromSegments (segment_s1, segment_s2);
+			map.at(i).at(0).z = delta_yaw * params_.z_weight;
+		}else{
+			map.at(i).at(0).z = 0.0;
+		}
 		for(int j = 0; j < map.at(i).size() - 2; j++){
 
-			Segment segment_s1, segment_s2;
 			segment_s1.first = Eigen::Vector2d(map.at(i).at(j).x, map.at(i).at(j).y);
 			segment_s1.second = Eigen::Vector2d(map.at(i).at(j+1).x, map.at(i).at(j+1).y);
 			segment_s2.first = Eigen::Vector2d(map.at(i).at(j+1).x, map.at(i).at(j+1).y);
@@ -201,13 +214,7 @@ void DataProcessing::samplePolylineMap (void)
 			sampleSegments (segment_s1, map.at(i).at(j+1).id, map.at(i).at(j).z, map.at(i).at(j+1).z, new_polyline);
 
 			if (j == map.at(i).size() - 3){ // last iteration, to include last point
-				segment_s1.first = Eigen::Vector2d(map.at(i).at(j+1).x, map.at(i).at(j+1).y);
-				segment_s1.second = Eigen::Vector2d(map.at(i).at(j+2).x, map.at(i).at(j+2).y);
-				segment_s2.first = Eigen::Vector2d(map.at(i).at(j+2).x, map.at(i).at(j+2).y);
-				segment_s2.second = Eigen::Vector2d(map.at(i).at(j+2).x, map.at(i).at(j+2).y);
-
-				sampleSegments (segment_s1, map.at(i).at(j+2).id, map.at(i).at(j+1).z, map.at(i).at(j+2).z, new_polyline);
-				sampleSegments (segment_s2, map.at(i).at(j+2).id, map.at(i).at(j+2).z, map.at(i).at(j+2).z, new_polyline);
+				sampleSegments (segment_s2, map.at(i).at(j+2).id, map.at(i).at(j+1).z, map.at(i).at(0).z, new_polyline);
 			}
 		}
 		/*for (int k = 2; k < new_polyline.size(); k++){ // filter
@@ -272,6 +279,18 @@ void DataProcessing::parseDetectionsToPcl (std::string frame)
 	for (int i = 0; i < this->detections_.at(0).size(); i++){
 		this->detections_pcl_->push_back(pcl::PointXYZ(this->detections_.at(0).at(i).x,
 											           this->detections_.at(0).at(i).y, 0.0));
+	}
+	return;
+}
+
+void DataProcessing::parseAssociationsToPcl (std::string frame, AssociationsVector& associations)
+{
+	this->associated_pcl_->clear();
+	this->associated_pcl_->header.frame_id = frame;
+
+	for (int i = 0; i < associations.size(); i++){
+		this->associated_pcl_->push_back(pcl::PointXYZ(associations.at(i).first.x(),
+											           associations.at(i).first.y(), 0.0));
 	}
 	return;
 }

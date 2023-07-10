@@ -29,6 +29,9 @@ public:
 	PointCloudPCL getDetectionsPcl (void){
 		return detections_pcl_;
 	}
+	PointCloudPCL getAssociatedPcl (void){
+		return associated_pcl_;
+	}
 	PointCloudPCL getCoregisteredPcl (void){
 		return coregistered_pcl_;
 	}
@@ -75,6 +78,7 @@ public:
 	void createLandmarksFromMap (Pose2D position);
 	void parseLandmarksToPcl (std::string frame);
 	void parseDetectionsToPcl (std::string frame);
+	void parseAssociationsToPcl (std::string frame, AssociationsVector& associations);
 	void applyTfFromLandmarksToBaseFrame (Eigen::Isometry3d tf);
 	void dataAssociationIcp (std::string frame, Eigen::Matrix4d& tf, AssociationsVector& associations);
 	
@@ -87,6 +91,7 @@ private:
 	PointCloudPCL landmarks_pcl_;
 	PointCloudPCL detections_pcl_;
 	PointCloudPCL coregistered_pcl_;
+	PointCloudPCL associated_pcl_;
 
 	IndexVector landmarks_i_;
 	IndexVector landmarks_j_;

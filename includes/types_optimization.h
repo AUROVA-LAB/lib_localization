@@ -30,6 +30,7 @@ struct AssoPointsConstraint {
     // Associate data
     Eigen::Vector3d detection;
     Eigen::Vector3d landmark;
+    double asso_weight;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     // Covariance and information matrix (inverse of covariance)

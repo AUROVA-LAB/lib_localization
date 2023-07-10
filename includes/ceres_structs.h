@@ -136,8 +136,8 @@ struct PriorMisErrorTerm {
  * @brief: data association points cost function
  */
 struct AssoPointsErrorTerm {
-	AssoPointsErrorTerm(const Eigen::Vector3d& det, const Eigen::Vector3d& lm, const Eigen::Matrix<double, 3, 3>& information)
-            : det_(det), lm_(lm), information_(information) {
+	AssoPointsErrorTerm(const Eigen::Vector3d& det, const Eigen::Vector3d& lm, const double& asso_weight, const Eigen::Matrix<double, 3, 3>& information)
+            : det_(det), lm_(lm), asso_weight_(asso_weight), information_(information) {
     }
 
     template <typename T>
@@ -156,7 +156,7 @@ struct AssoPointsErrorTerm {
         Eigen::Map<Eigen::Matrix<T, 3, 1>> residuals(residuals_ptr);
         Eigen::Matrix<T, 3, 1> det_tf = tf * det_.template cast<T>();
         Eigen::Matrix<T, 3, 1> delta = det_tf - lm_.template cast<T>();
-        residuals.template block<3, 1>(0, 0) = delta / 1.0;
+        residuals.template block<3, 1>(0, 0) = delta * asso_weight_;
 
         // Scale the residuals by the measurement uncertainty.
 		residuals.applyOnTheLeft(information_.template cast<T>());
@@ -166,8 +166,9 @@ struct AssoPointsErrorTerm {
 
     static ceres::CostFunction* Create(const Eigen::Vector3d& det,
                                        const Eigen::Vector3d& lm,
+                                       const double& asso_weight,
                                        const Eigen::Matrix<double, 3, 3>& information) {
-        return new ceres::AutoDiffCostFunction<AssoPointsErrorTerm, 3, 3, 4>(new AssoPointsErrorTerm(det, lm, information));
+        return new ceres::AutoDiffCostFunction<AssoPointsErrorTerm, 3, 3, 4>(new AssoPointsErrorTerm(det, lm, asso_weight, information));
     }
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -175,6 +176,7 @@ struct AssoPointsErrorTerm {
     // the matched landmark and detection.
     const Eigen::Vector3d det_;
     const Eigen::Vector3d lm_;
+    const double asso_weight_;
     // The square root of the measurement information matrix.
     const Eigen::Matrix<double, 3, 3> information_;
 };
