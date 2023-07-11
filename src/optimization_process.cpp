@@ -141,9 +141,9 @@ void OptimizationProcess::solveOptimizationProblem(ceres::Problem* problem)
     options.max_num_iterations = params_.max_num_iterations_op;
     options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
     ceres::Solver::Summary summary;
-    std::cout << "Pre-solve" << std::endl;
+    //std::cout << "Pre-solve" << std::endl;
     ceres::Solve(options, problem, &summary);
-    std::cout << "Post-solve" << std::endl;
+    //std::cout << "Post-solve" << std::endl;
     //std::cout << summary.FullReport() << '\n';
 	return;
 }

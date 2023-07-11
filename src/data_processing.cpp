@@ -322,6 +322,8 @@ void DataProcessing::dataAssociationIcp (std::string frame, Eigen::Matrix4d& tf,
 
 	this->coregistered_pcl_->clear();
 	this->coregistered_pcl_->header.frame_id = frame;
+	this->landmarks_z_.clear();
+
 
 	icp.align(*this->coregistered_pcl_);
 
@@ -361,6 +363,9 @@ void DataProcessing::dataAssociationIcp (std::string frame, Eigen::Matrix4d& tf,
                                                                     this->coregistered_pcl_->points.at(i).y,
                                                                     0.0);
 			associations.push_back(association);
+
+			this->landmarks_z_.push_back(map_.at(this->landmarks_i_.at(pointIdxKNNSearch[0])).at(this->landmarks_j_.at(pointIdxKNNSearch[0])).z);
+
         }
       }
     }
@@ -375,6 +380,31 @@ void DataProcessing::dataAssociationIcp (std::string frame, Eigen::Matrix4d& tf,
 	this->addTranslationDaEvolution(tf_dist);
 
 	return;
+}
+
+float DataProcessing::dataInformation (void)
+{
+	float e = 2.7183;
+	float acum = 0.0;
+	float information = 0.0;
+	float phi = 0.0;
+
+	for (int i = 0; i < this->landmarks_z_.size(); i++) acum = acum + this->landmarks_z_.at(i);
+
+	switch (params_.type){
+		case 1:
+			phi = (acum / params_.k) * params_.m - (params_.m / 2);
+			break;
+		case 2:
+			phi = acum - params_.lambda;
+			break;
+		default:
+			phi = acum - params_.lambda;
+			break;
+	}	
+	information = 1 / (1 + pow(e, -phi));
+
+	return information;
 }
 
 }

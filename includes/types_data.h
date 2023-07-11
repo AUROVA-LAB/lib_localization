@@ -58,6 +58,12 @@ struct ConfigParams {
 	float w_var;
 	float threshold_asso;
 	float voxel_asso;
+
+	// Sigmoid options for weights
+	int type;
+	float lambda;
+	float k;
+	float m;
 };
 
 using IndexVector = std::vector<int>;

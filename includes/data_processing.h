@@ -81,6 +81,7 @@ public:
 	void parseAssociationsToPcl (std::string frame, AssociationsVector& associations);
 	void applyTfFromLandmarksToBaseFrame (Eigen::Isometry3d tf);
 	void dataAssociationIcp (std::string frame, Eigen::Matrix4d& tf, AssociationsVector& associations);
+	float dataInformation (void);
 	
 private:
 	ConfigParams params_;
@@ -95,6 +96,7 @@ private:
 
 	IndexVector landmarks_i_;
 	IndexVector landmarks_j_;
+	std::vector<float> landmarks_z_;
 
 	std::vector<float> var_da_trs_;
 	std::vector<float> var_da_rot_;
