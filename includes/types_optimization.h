@@ -14,6 +14,7 @@ struct OdometryConstraint {
     // transformation from begin pose to end pose
 	Eigen::Vector3d tf_p;
     Eigen::Quaterniond tf_q;
+    double odom_weight;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 	// Covariance and information matrix (inverse of covariance)

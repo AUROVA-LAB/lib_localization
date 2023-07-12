@@ -64,6 +64,8 @@ struct ConfigParams {
 	float lambda;
 	float k;
 	float m;
+
+	float odom_preweight;
 };
 
 using IndexVector = std::vector<int>;

@@ -10,8 +10,8 @@ namespace optimization_process {
  * @brief: Odometry cost function
  */
 struct OdometryErrorTerm {
-	OdometryErrorTerm(const Eigen::Vector3d tf_p, const Eigen::Quaterniond tf_q, const Eigen::Matrix<double, 6, 6>& information)
-            : tf_p_(tf_p), tf_q_(tf_q), information_(information){
+	OdometryErrorTerm(const Eigen::Vector3d tf_p, const Eigen::Quaterniond tf_q, const double odom_weight, const Eigen::Matrix<double, 6, 6>& information)
+            : tf_p_(tf_p), tf_q_(tf_q), odom_weight_(odom_weight), information_(information){
     }
 
     template <typename T>
@@ -34,8 +34,8 @@ struct OdometryErrorTerm {
 
         // Compute the residuals.
         Eigen::Map<Eigen::Matrix<T, 6, 1>> residuals(residuals_ptr);
-        residuals.template block<3, 1>(0, 0) = (p_ab_estimated - tf_p_.template cast<T>()) * 100.0;
-        residuals.template block<3, 1>(3, 0) = delta_q.vec() * 100.0;
+        residuals.template block<3, 1>(0, 0) = (p_ab_estimated - tf_p_.template cast<T>()) * odom_weight_;
+        residuals.template block<3, 1>(3, 0) = delta_q.vec() * odom_weight_;
 
         // Scale the residuals by the measurement uncertainty.
 		residuals.applyOnTheLeft(information_.template cast<T>());
@@ -43,9 +43,9 @@ struct OdometryErrorTerm {
         return true;
     }
 
-    static ceres::CostFunction* Create(const Eigen::Vector3d tf_p, const Eigen::Quaterniond tf_q,
+    static ceres::CostFunction* Create(const Eigen::Vector3d tf_p, const Eigen::Quaterniond tf_q, const double odom_weight,
     		                           const Eigen::Matrix<double, 6, 6>& information) {
-        return new ceres::AutoDiffCostFunction<OdometryErrorTerm, 6, 3, 4, 3, 4>(new OdometryErrorTerm(tf_p, tf_q, information));
+        return new ceres::AutoDiffCostFunction<OdometryErrorTerm, 6, 3, 4, 3, 4>(new OdometryErrorTerm(tf_p, tf_q, odom_weight, information));
     }
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -53,6 +53,7 @@ struct OdometryErrorTerm {
     // The measurement for the position of B relative to A in the A frame.
 	const Eigen::Vector3d tf_p_;
     const Eigen::Quaterniond tf_q_;
+    const double odom_weight_;
     // The square root of the measurement information matrix.
     const Eigen::Matrix<double, 6, 6> information_;
 };

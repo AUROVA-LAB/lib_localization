@@ -20,6 +20,7 @@ void OptimizationProcess::generateOdomResiduals(ceres::LossFunction* loss_functi
 
 		ceres::CostFunction* cost_function_odom = OdometryErrorTerm::Create(constraints_odom_.at(index).tf_p,
 																			constraints_odom_.at(index).tf_q,
+                                                                            constraints_odom_.at(index).odom_weight,
 																			constraints_odom_.at(index).information);
 		problem->AddResidualBlock(cost_function_odom,
 								  loss_function,
