@@ -15,7 +15,8 @@ DataProcessing::DataProcessing(ConfigParams params)
 	this->landmarks_pcl_ = PointCloudPCL(new pcl::PointCloud<pcl::PointXYZ>); 
 	this->detections_pcl_ = PointCloudPCL(new pcl::PointCloud<pcl::PointXYZ>); 
 	this->coregistered_pcl_ = PointCloudPCL(new pcl::PointCloud<pcl::PointXYZ>); 
-	this->associated_pcl_ = PointCloudPCL(new pcl::PointCloud<pcl::PointXYZ>);
+	this->associated_dt_pcl_ = PointCloudPCL(new pcl::PointCloud<pcl::PointXYZ>);
+	this->associated_lm_pcl_ = PointCloudPCL(new pcl::PointCloud<pcl::PointXYZ>);
 	return;
 }
 
@@ -283,14 +284,26 @@ void DataProcessing::parseDetectionsToPcl (std::string frame)
 	return;
 }
 
-void DataProcessing::parseAssociationsToPcl (std::string frame, AssociationsVector& associations)
+void DataProcessing::parseAssociationsLmToPcl (std::string frame, AssociationsVector& associations)
 {
-	this->associated_pcl_->clear();
-	this->associated_pcl_->header.frame_id = frame;
+	this->associated_lm_pcl_->clear();
+	this->associated_lm_pcl_->header.frame_id = frame;
 
 	for (int i = 0; i < associations.size(); i++){
-		this->associated_pcl_->push_back(pcl::PointXYZ(associations.at(i).first.x(),
-											           associations.at(i).first.y(), 0.0));
+		this->associated_lm_pcl_->push_back(pcl::PointXYZ(associations.at(i).first.x(),
+											              associations.at(i).first.y(), 0.0));
+	}
+	return;
+}
+
+void DataProcessing::parseAssociationsDtToPcl (std::string frame, AssociationsVector& associations)
+{
+	this->associated_dt_pcl_->clear();
+	this->associated_dt_pcl_->header.frame_id = frame;
+
+	for (int i = 0; i < associations.size(); i++){
+		this->associated_dt_pcl_->push_back(pcl::PointXYZ(associations.at(i).second.x(),
+											              associations.at(i).second.y(), 0.0));
 	}
 	return;
 }
