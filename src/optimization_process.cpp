@@ -38,6 +38,32 @@ void OptimizationProcess::generateOdomResiduals(ceres::LossFunction* loss_functi
 	return;
 }
 
+void OptimizationProcess::generateOdomResidualsGT(ceres::LossFunction* loss_function,
+		                                          ceres::LocalParameterization* quaternion_local_parameterization,
+												  ceres::Problem* problem)
+{
+	//// Generate residuals
+	for (int j = 1; j < trajectory_estimated_GT_.size(); j++){
+
+		size_t index = j;
+
+		ceres::CostFunction* cost_function_odom = OdometryErrorTerm::Create(constraints_odom_GT_.at(index).tf_p,
+																			constraints_odom_GT_.at(index).tf_q,
+                                                                            constraints_odom_GT_.at(index).odom_weight,
+																			constraints_odom_GT_.at(index).information);
+		problem->AddResidualBlock(cost_function_odom,
+								  loss_function,
+								  trajectory_estimated_GT_.at(index-1).p.data(),
+								  trajectory_estimated_GT_.at(index-1).q.coeffs().data(),
+								  trajectory_estimated_GT_.at(index).p.data(),
+								  trajectory_estimated_GT_.at(index).q.coeffs().data());
+
+		problem->SetParameterization(trajectory_estimated_GT_.at(index-1).q.coeffs().data(), quaternion_local_parameterization);
+		problem->SetParameterization(trajectory_estimated_GT_.at(index).q.coeffs().data(), quaternion_local_parameterization);
+	}
+	return;
+}
+
 void OptimizationProcess::generateAssoPointResiduals(ceres::LossFunction* loss_function,
 		                                             ceres::LocalParameterization* quaternion_local_parameterization,
 												     ceres::Problem* problem)
@@ -114,6 +140,26 @@ void OptimizationProcess::generatePriorResiduals(ceres::LossFunction* loss_funct
 	return;
 }
 
+void OptimizationProcess::generatePriorResidualsGT(ceres::LossFunction* loss_function,
+		                                           ceres::LocalParameterization* quaternion_local_parameterization,
+												   ceres::Problem* problem)
+{
+	//// Generate residuals
+    for(int i = 0; i < constraints_prior_GT_.size(); i++){
+        for (int j = 0; j < trajectory_estimated_GT_.size(); j++){
+            if (constraints_prior_GT_.at(i).id == trajectory_estimated_GT_.at(j).id){
+                ceres::CostFunction* cost_function_prior = PriorErrorTerm::Create(constraints_prior_GT_.at(i).p,
+                                                                                  constraints_prior_GT_.at(i).information.block<3, 3>(0, 0));
+                problem->AddResidualBlock(cost_function_prior,
+                                          loss_function,
+                                          trajectory_estimated_GT_.at(j).p.data());
+                break;
+            }
+        }
+    }
+	return;
+}
+
 void OptimizationProcess::generatePriorErrorResiduals(ceres::LossFunction* loss_function,
 		                                              ceres::LocalParameterization* quaternion_local_parameterization,
 												      ceres::Problem* problem)
@@ -167,6 +213,7 @@ void OptimizationProcess::initializeState(void)
     propagated_pose.covariance = covariance;
 
     this->addPose3dToTrajectoryEstimated(propagated_pose);
+    this->addPose3dToTrajectoryEstimatedGT(propagated_pose);
 
     OdometryConstraint constraint_odom;
     constraint_odom.id_begin = -1;
@@ -177,6 +224,7 @@ void OptimizationProcess::initializeState(void)
     constraint_odom.information = constraint_odom.covariance.inverse();
 
     this->addOdometryConstraint (constraint_odom);
+    this->addOdometryConstraintGT (constraint_odom);
 
     return;
 }

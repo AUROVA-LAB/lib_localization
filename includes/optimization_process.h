@@ -16,11 +16,17 @@ public:
 			constraints_odom_.erase(constraints_odom_.begin());
 		}
 	}
+	void addOdometryConstraintGT (OdometryConstraint constraint_odom){
+		constraints_odom_GT_.push_back(constraint_odom);
+	}
 	void addPriorConstraint (PriorConstraint constraint_prior){
 		constraints_prior_.push_back(constraint_prior);
 		if (constraints_prior_.size() > params_.window_size){
 			constraints_prior_.erase(constraints_prior_.begin());
 		}
+	}
+	void addPriorConstraintGT (PriorConstraint constraint_prior){
+		constraints_prior_GT_.push_back(constraint_prior);
 	}
 	void addAssoConstraint (AssoConstraint constraints_asso){
 		constraints_asso_.push_back(constraints_asso);
@@ -40,10 +46,16 @@ public:
 			trajectory_estimated_.erase(trajectory_estimated_.begin());
 		}
 	}
+	void addPose3dToTrajectoryEstimatedGT (Pose3dWithCovariance pose3d_estimated){
+		trajectory_estimated_GT_.push_back(pose3d_estimated);
+	}
 
 	//// GET METHODS
 	Trajectory getTrajectoryEstimated (void){
 		return trajectory_estimated_;
+	}
+	Trajectory getTrajectoryEstimatedGT (void){
+		return trajectory_estimated_GT_;
 	}
 	PriorConstraintVector getPriorConstraints (void){
 		return constraints_prior_;
@@ -59,6 +71,12 @@ public:
 	void generatePriorResiduals (ceres::LossFunction* loss_function,
 			                     ceres::LocalParameterization* quaternion_local_parameterization,
 								 ceres::Problem* problem);
+	void generateOdomResidualsGT (ceres::LossFunction* loss_function,
+			                      ceres::LocalParameterization* quaternion_local_parameterization,
+								  ceres::Problem* problem);
+	void generatePriorResidualsGT (ceres::LossFunction* loss_function,
+			                       ceres::LocalParameterization* quaternion_local_parameterization,
+								   ceres::Problem* problem);
 	void generatePriorErrorResiduals (ceres::LossFunction* loss_function,
 			                          ceres::LocalParameterization* quaternion_local_parameterization,
 								      ceres::Problem* problem);
@@ -83,6 +101,11 @@ private:
 
     Trajectory trajectory_estimated_;
 	Eigen::Vector3d prior_error_;
+
+	// Vaiable fot Ground Truth
+	Trajectory trajectory_estimated_GT_;
+	OdometryConstraintsVector constraints_odom_GT_;
+	PriorConstraintVector constraints_prior_GT_;
 };
 
 }
