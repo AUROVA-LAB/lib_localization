@@ -84,6 +84,7 @@ public:
 	void parseAssociationsLmToPcl (std::string frame, AssociationsVector& associations);
 	void parseAssociationsDtToPcl (std::string frame, AssociationsVector& associations);
 	void applyTfFromLandmarksToBaseFrame (Eigen::Isometry3d tf);
+	void applyTfFromDetectionsToBaseFrame (Eigen::Isometry3d tf);
 	void dataAssociationIcp (std::string frame, Eigen::Matrix4d& tf, AssociationsVector& associations);
 	float dataInformation (void);
 	

@@ -326,6 +326,24 @@ void DataProcessing::applyTfFromLandmarksToBaseFrame (Eigen::Isometry3d tf)
 	return;
 }
 
+void DataProcessing::applyTfFromDetectionsToBaseFrame (Eigen::Isometry3d tf)
+{
+	for(int i = 0; i < detections_.size(); i++){
+		for(int j = 0; j < detections_.at(i).size(); j++){
+			Eigen::Vector3d point;
+			point.x() = detections_.at(i).at(j).x;
+			point.y() = detections_.at(i).at(j).y;
+			point.z() = detections_.at(i).at(j).z;
+
+			point = tf.inverse() * point;
+			detections_.at(i).at(j).x = point.x();
+			detections_.at(i).at(j).y = point.y();
+			detections_.at(i).at(j).z = point.z();
+		}
+	}
+	return;
+}
+
 void DataProcessing::dataAssociationIcp (std::string frame, Eigen::Matrix4d& tf, AssociationsVector& associations)
 {
 	//// DATA CO-REGISTRATION
